@@ -1,129 +1,81 @@
-# telecom-analysis
-# Sprint 7 - Análisis estadístico para detectar patrones de uso de clientes
+# 📱 ConnectaTel: Análisis de Comportamiento y Retención de Clientes
 
-## Descripción del proyecto
-
-Este proyecto corresponde al análisis exploratorio y estadístico de una base de clientes de telecomunicaciones, con el objetivo de identificar patrones de comportamiento, segmentar usuarios y detectar oportunidades de negocio a partir del uso de mensajes, llamadas y minutos consumidos.
-
-A través de este análisis se buscó responder preguntas clave del negocio, como:
-
-- ¿Qué segmentos de clientes muestran mayor o menor uso de llamadas y mensajes?
-- ¿Qué usuarios presentan valores atípicos que puedan indicar comportamientos inusuales?
-- ¿Cómo varía el uso según la edad y el tipo de plan contratado?
-- ¿Qué patrones pueden ayudar a diseñar mejores planes y optimizar la oferta comercial?
+## 🎯 Objetivo / Pregunta de Negocio
+¿Qué patrones de uso tienen los clientes de ConnectaTel y qué segmentos representan mayor valor comercial?  
+Este proyecto analiza el comportamiento de ~4,000 clientes de telecomunicaciones en Latinoamérica para identificar oportunidades de segmentación, upselling y retención basadas en datos.
 
 ---
 
-## Objetivo del análisis
-
-Traducir los hallazgos estadísticos en conclusiones accionables para el negocio, enfocadas en:
-
-- segmentación de clientes,
-- patrones de uso,
-- detección de valores atípicos,
-- identificación de segmentos valiosos,
-- oportunidades de mejora en la oferta de planes.
+## 📂 Datos
+| Dataset | Fuente | Contenido |
+|---|---|---|
+| `plans.csv` | TripleTen / Practicum | 2 planes disponibles (Básico y Premium) con precios, minutos, GB y costos por excedente |
+| `users_latam.csv` | TripleTen / Practicum | ~4,000 usuarios con edad, ciudad, plan contratado y fecha de registro |
+| `usage.csv` | TripleTen / Practicum | Registro de actividad por usuario: mensajes de texto, llamadas y duración en minutos (año 2024) |
 
 ---
 
-## Contenido del repositorio
+## ⚙️ Proceso
 
-Este repositorio contiene:
+### 1. Carga y Exploración Inicial (Python - Pandas)
+- Carga de los 3 datasets y revisión de estructura, tipos de datos y dimensiones
+- Identificación de columnas relevantes por dataset
 
-- `Sprint_7_analisis_estadistico.ipynb`  
-  Notebook principal con todo el análisis exploratorio, limpieza de datos, visualizaciones, segmentación e insight ejecutivo.
+### 2. Calidad de Datos
+- **Valores nulos detectados y tratados:**
+  - `city` (~12%): impacto bajo, no se usa para segmentación → se deja como nulo
+  - `churn_date` (~88%): consistente con usuarios activos → se deja como nulo
+  - `duration` (55%) y `length` (48%): dependientes del tipo de evento (MAR — Missing At Random) → se dejan como nulos sin imputar
+- **Valores erróneos:** columna `age` con valores -999 → reemplazados por la mediana de la distribución real
+- **Fechas imposibles:** 40 registros con año 2026 en `reg_date` → eliminados (< 1% del total)
+- **Valores sentinel:** caracteres "?" en `city` → reemplazados por NA
 
-- `README.md`  
-  Documento descriptivo del proyecto.
+### 3. Análisis de Uso por Usuario (Python - Pandas)
+- Creación de columnas auxiliares `is_text` e `is_call` para conteo por tipo
+- Agregación por `user_id`: total de mensajes, llamadas y minutos
+- Merge con dataset de usuarios para crear perfil completo (`user_profile`)
 
-- Archivos de datos utilizados para el análisis, en caso de incluirse en el repositorio.
+### 4. Análisis Estadístico y Visualización (Matplotlib - Seaborn)
+- Histogramas por tipo de plan para: edad, mensajes, llamadas y minutos
+- Boxplots para detección de outliers en variables de uso
+- Cálculo de límites IQR para cuantificar outliers por variable
 
----
-
-## Tecnologías utilizadas
-
-- Python 3
-- Pandas
-- NumPy
-- Matplotlib
-- Seaborn
-- Jupyter Notebook 
-
----
-
-## Principales hallazgos
-
-### 1. Calidad de datos
-Se detectaron valores nulos en distintas columnas, aunque en su mayoría no comprometen el análisis:
-
-- `city`: ~12%
-- `churn_date`: ~88%
-- `date`: ~0.1%
-- `length`: ~48%
-- `duration`: ~55%
-
-También se detectaron valores erróneos en la variable `age`, los cuales fueron corregidos usando la mediana.
-
-### 2. Perfil general de usuarios
-- Se analizaron aproximadamente **3,999 usuarios**
-- Edad promedio: **48 años**
-- Rango de edad: **18 a 79 años**
-
-La población es amplia y diversa, con predominio del segmento adulto.
-
-### 3. Segmentación por edad
-Se construyeron grupos de edad para facilitar el análisis:
-
-- **Joven:** 18 a 30 años
-- **Adulto:** 31 a 60 años
-- **Adulto Mayor:** más de 60 años
-
-El grupo con mayor presencia es el de **Adultos**, seguido por **Adultos Mayores**.
-
-### 4. Segmentación por nivel de uso
-Se clasificó a los usuarios según su intensidad de consumo:
-
-- **Bajo uso**
-- **Uso medio**
-- **Alto uso**
-
-El grupo dominante fue **Uso medio**, con aproximadamente **74% del total**, lo que indica que la mayoría de los usuarios consume el servicio de manera moderada.
-
-### 5. Comportamiento de uso
-Promedios observados:
-
-- Mensajes: **5.52**
-- Llamadas: **4.48**
-- Minutos en llamadas: **23.31**
-
-Esto sugiere un comportamiento de uso moderado, con una distribución sesgada hacia la derecha, especialmente en la variable de minutos.
-
-### 6. Valores atípicos detectados
-Se identificaron outliers en variables de consumo:
-
-- `cant_mensajes`: **46**
-- `cant_llamadas`: **30**
-- `cant_minutos_llamada`: **109**
-
-Estos valores no necesariamente representan errores, sino usuarios intensivos que podrían pertenecer a un segmento de alto valor comercial.
-
-### 7. Insight ejecutivo
-La mayoría de los clientes pertenece al segmento adulto y presenta un nivel de uso medio. Sin embargo, existe un grupo reducido de usuarios intensivos que concentra consumos atípicos, especialmente en minutos de llamada.
-
-Esto representa una oportunidad para:
-
-- diseñar estrategias de **upselling** hacia planes premium,
-- crear ofertas diferenciadas para usuarios intensivos,
-- optimizar la propuesta de valor para segmentos adultos, que parecen ser los más rentables.
+### 5. Segmentación de Clientes
+- **Por nivel de uso:** Bajo uso / Uso medio / Alto uso (basado en llamadas y mensajes)
+- **Por edad:** Joven (< 30) / Adulto (30–60) / Adulto Mayor (> 60)
 
 ---
 
-## Recomendaciones de negocio
+## 📊 Insights Clave
 
-- Enfocar estrategias comerciales en el segmento **Adulto**, ya que concentra buena parte del consumo.
-- Diseñar planes específicos para usuarios de **alto consumo**, especialmente en llamadas y minutos.
-- Crear campañas de conversión para mover usuarios de **uso medio** hacia planes de mayor valor.
-- Mantener monitoreo sobre usuarios con comportamiento atípico para detectar oportunidades comerciales o posibles anomalías.
+1. **El segmento adulto domina y es el más valioso:** El grupo de 31–60 años representa ~50% del total. Los adultos mayores (60+) concentran el mayor consumo de plan Premium, especialmente en llamadas de larga duración — un segmento de alto valor comercial desatendido.
+
+2. **La mayoría de clientes tiene uso moderado con oportunidad de upselling:** El 74% de usuarios cae en "Uso medio". Este segmento es el principal candidato para campañas de conversión hacia el plan Premium, ya que su consumo está cerca del límite del plan Básico.
+
+3. **Los outliers son usuarios de alto valor, no errores:** Se detectaron 109 outliers en minutos de llamada, 46 en mensajes y 30 en llamadas. Estos usuarios intensivos tienden a consumir plan Premium y representan oportunidades de fidelización, no anomalías a eliminar.
 
 ---
 
+## 💡 Recomendación / Siguiente Paso
+Si esto fuera una tarea laboral real:
+- **Campaña de upselling dirigida al segmento "Uso medio":** Ofrecer prueba gratuita de plan Premium a usuarios cuyo consumo supera el 80% del límite del plan Básico.
+- **Plan especial para adultos mayores intensivos:** Este segmento muestra alta fidelidad y mayor disposición al plan Premium — un paquete de llamadas ilimitadas podría aumentar su retención.
+- **Monitoreo de churn:** Cruzar los datos de `churn_date` con segmentos de uso para identificar qué perfil cancela más y diseñar intervenciones preventivas.
+
+---
+
+## 🔗 Enlaces
+- 📓 [Notebook del proyecto](./S7_Version-Estudiante-Project-ConnectaTel.ipynb)
+
+---
+
+## 🛠️ Herramientas Utilizadas
+`Python` · `Pandas` · `NumPy` · `Matplotlib` · `Seaborn` · `Jupyter Notebook`
+
+---
+
+## 👩‍💻 Sobre mí
+Soy Yetlanezzi Robles, Data Analyst con más de 7 años de experiencia en operaciones retail. Actualmente completando mi certificación en Análisis de Datos en TripleTen.
+
+📩 yetlanezziroblescano@gmail.com  
+🔗 [LinkedIn](https://www.linkedin.com/in/yetlanezzi-analyst)
